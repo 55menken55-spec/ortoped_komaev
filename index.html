@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вадим Комаев — Ортопед-реабилитолог</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Admin Bar (hidden by default) -->
+    <div id="adminBar" class="admin-bar hidden">
+        <div class="admin-bar-inner">
+            <span>🔓 РЕЖИМ АДМИНИСТРАТОРА</span>
+            <div class="admin-actions">
+                <button onclick="openServiceModal()">+ Услуга</button>
+                <button onclick="resetData()" class="secondary">Сбросить</button>
+                <button onclick="disableAdmin()" class="danger">Выйти из админки</button>
+            </div>
+        </div>
+        <div class="admin-hint">Фото добавляются кнопками в каждом разделе. Услуги — редактируются на карточках. Данные хранятся в браузере (localStorage).</div>
+    </div>
+
+    <header class="header">
+        <div class="container header-inner">
+            <div class="logo">
+                <div class="logo-mark">К</div>
+                <div class="logo-text">
+                    <strong>ВАДИМ КОМАЕВ</strong>
+                    <span>Ортопед • Реабилитолог</span>
+                </div>
+            </div>
+            <nav class="nav">
+                <a href="#services">Услуги</a>
+                <a href="#priem">Приём</a>
+                <a href="#konsult">Консультация</a>
+                <a href="#stelki">Стельки</a>
+                <a href="#dinamika">Динамика</a>
+                <a href="#contacts">Контакты</a>
+            </nav>
+            <div class="header-contacts">
+                <a href="tel:+79289347101" class="phone">+7 928 934-71-01</a>
+                <a href="https://vk.com/ortoped_komaev" target="_blank" class="vk">VK: ortoped_komaev</a>
+                <a href="#contacts" class="btn btn-red">Записаться</a>
+            </div>
+            <button class="burger" id="burger">☰</button>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="#services">Услуги</a>
+            <a href="#priem">Приём</a>
+            <a href="#konsult">Консультация</a>
+            <a href="#stelki">Стельки</a>
+            <a href="#dinamika">Динамика</a>
+            <a href="#contacts">Контакты</a>
+            <a href="tel:+79289347101">+7 928 934-71-01</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container hero-inner">
+            <div class="hero-text">
+                <div class="badge">Детский и взрослый приём • г. Пятигорск</div>
+                <h1>СТОПА —<br><span class="red">ФУНДАМЕНТ</span><br>ВСЕГО ТЕЛА</h1>
+                <p>Я, <strong>Вадим Комаев</strong>, ортопед-реабилитолог. Диагностирую на плантоскопе, изготавливаю индивидуальные стельки и веду до результата. Работаю с плоскостопием, вальгусом, сколиозом, разницей длины ног.</p>
+                <div class="hero-stats">
+                    <div><b>15+</b><span>лет практики</span></div>
+                    <div><b>1000+</b><span>пар стелек</span></div>
+                    <div><b>До/После</b><span>реальная динамика</span></div>
+                </div>
+                <div class="hero-btns">
+                    <a href="tel:+79289347101" class="btn btn-black">Позвонить +7 928 934-71-01</a>
+                    <a href="https://vk.com/ortoped_komaev" target="_blank" class="btn btn-outline">Написать в VK</a>
+                </div>
+            </div>
+            <div class="hero-gallery" id="heroGallery">
+                <!-- images via JS -->
+            </div>
+        </div>
+    </section>
+
+    <section class="about">
+        <div class="container about-inner">
+            <div class="about-photos" id="aboutGallery"></div>
+            <div class="about-text">
+                <h2>Приём — это <span class="red">диагностика,</span> а не просто продажа стелек</h2>
+                <ul>
+                    <li><span class="dot"></span> Осмотр на плантоскопе с подсветкой — вижу зоны перегрузки</li>
+                    <li><span class="dot"></span> Тест на разницу длины ног, вальгус пятки, сколиотическую установку</li>
+                    <li><span class="dot"></span> Объясняю на модели стопы, что происходит</li>
+                    <li><span class="dot"></span> Формовка заготовки феном прямо на приёме под вашу стопу</li>
+                    <li><span class="dot"></span> Коррекция и наблюдение в динамике</li>
+                </ul>
+                <div class="quote">«Стелька без диагностики — просто кусок материала. Моя задача — найти причину»</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-head">
+                <h2>Услуги и цены</h2>
+                <p>Порядок как в вашем прайсе — от 1 до 6. В админке можно менять цены и добавлять услуги.</p>
+            </div>
+            <div id="servicesGrid" class="services-grid"></div>
+            <div class="services-note">* Длительность указана ориентировочно. Точное время зависит от случая. Оплата на приёме.</div>
+        </div>
+    </section>
+
+    <section id="priem" class="gallery-section">
+        <div class="container">
+            <div class="section-head row">
+                <div>
+                    <h2>Приём</h2>
+                    <p>Как проходит первичный и повторный приём. Осмотр, плантоскоп, беседа.</p>
+                </div>
+                <div class="admin-only" data-gallery="priem">
+                    <label class="btn btn-small btn-red">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'priem')"></label>
+                </div>
+            </div>
+            <div id="gallery-priem" class="masonry"></div>
+        </div>
+    </section>
+
+    <section id="konsult" class="gallery-section alt">
+        <div class="container">
+            <div class="section-head row">
+                <div>
+                    <h2>Консультация</h2>
+                    <p>Разъясняю диагноз, показываю на модели кости, заполняю карту.</p>
+                </div>
+                <div class="admin-only" data-gallery="konsult">
+                    <label class="btn btn-small btn-red">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'konsult')"></label>
+                </div>
+            </div>
+            <div id="gallery-konsult" class="masonry"></div>
+        </div>
+    </section>
+
+    <section id="stelki" class="gallery-section">
+        <div class="container">
+            <div class="section-head row">
+                <div>
+                    <h2>Изготовление стелек</h2>
+                    <p>Индивидуальные стельки: до 34 размера и с 35 размера, спортивные. Формовка с нагревом, примерка на плантоскопе.</p>
+                </div>
+                <div class="admin-only" data-gallery="stelki">
+                    <label class="btn btn-small btn-red">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'stelki')"></label>
+                </div>
+            </div>
+            <div id="gallery-stelki" class="masonry"></div>
+            <div class="process">
+                <div class="process-step"><span>1</span><b>Сканирование</b><p>Становитесь на стекло, вижу отпечаток</p></div>
+                <div class="process-step"><span>2</span><b>Подбор заготовки</b><p>Учитываю вес, размер, активность</p></div>
+                <div class="process-step"><span>3</span><b>Формовка</b><p>Нагрев феном, приклейка клиньев</p></div>
+                <div class="process-step"><span>4</span><b>Примерка</b><p>Снова на стекло — контроль коррекции</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="dinamika" class="gallery-section dark">
+        <div class="container">
+            <div class="section-head row">
+                <div>
+                    <h2>Динамика <span class="red">До / После</span></h2>
+                    <p>Реальные результаты. Сколиоз, вальгус, разница длины ног, грибковые изменения при коррекции опоры. Фото публикуются с согласия.</p>
+                </div>
+                <div class="admin-only" data-gallery="dinamika">
+                    <label class="btn btn-small btn-white">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'dinamika')"></label>
+                </div>
+            </div>
+            <div id="gallery-dinamika" class="masonry before-after"></div>
+            <div class="disclaimer">⚠️ Фото До/После демонстрируют индивидуальный результат. Не является гарантией. Требуется консультация специалиста.</div>
+        </div>
+    </section>
+
+    <section id="contacts" class="contacts">
+        <div class="container contacts-inner">
+            <div class="contacts-text">
+                <h2>Запись на приём</h2>
+                <p>Принимаю по предварительной записи. Лучше писать в VK или звонить.</p>
+                <div class="contact-cards">
+                    <a href="tel:+79289347101" class="contact-card">
+                        <div class="cc-icon">📞</div>
+                        <div><b>+7 928 934-71-01</b><span>Телефон для записи</span></div>
+                    </a>
+                    <a href="https://vk.com/ortoped_komaev" target="_blank" class="contact-card">
+                        <div class="cc-icon">VK</div>
+                        <div><b>ortoped_komaev</b><span>ВКонтакте — фото, отзывы, динамика</span></div>
+                    </a>
+                </div>
+                <div class="contacts-note">
+                    <b>Адрес:</b> уточняйте при записи<br>
+                    <b>Режим:</b> по записи, Пн-Сб<br>
+                    <b>Что взять:</b> носочки, обувь в которой ходите чаще всего, предыдущие стельки/рентгены если есть
+                </div>
+            </div>
+            <div class="contacts-map">
+                <div class="map-placeholder">
+                    <p>📍 Карта</p>
+                    <small>Добавьте iframe Яндекс.Карт в админке — блок редактируемый</small>
+                    <div id="mapCustom" class="map-custom"></div>
+                </div>
+                <div class="admin-only">
+                    <label class="btn btn-small btn-outline">Загрузить фото кабинета <input type="file" accept="image/*" hidden onchange="handleUpload(event,'contacts')"></label>
+                    <div id="gallery-contacts" class="mini-gallery"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>© 2026 Вадим Комаев — ортопед-реабилитолог</div>
+            <div class="footer-links">
+                <span>Сайт работает без базы данных. Фото и цены хранятся в браузере.</span>
+                <a href="#" onclick="showAdminHelp(); return false;">Как войти в админку?</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Service Modal -->
+    <div id="serviceModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Добавить услугу</h3>
+            <input type="hidden" id="svcId">
+            <label>Название <input type="text" id="svcTitle" placeholder="Первичный приём"></label>
+            <div class="row2">
+                <label>Длительность <input type="text" id="svcDuration" placeholder="15 мин."></label>
+                <label>Цена <input type="text" id="svcPrice" placeholder="4500 RUB"></label>
+            </div>
+            <label>Описание (необязательно) <textarea id="svcDesc" placeholder="Что входит"></textarea></label>
+            <label>Порядок (1 - первый) <input type="number" id="svcOrder" min="1" max="100"></label>
+            <div class="modal-actions">
+                <button class="btn btn-black" onclick="saveService()">Сохранить</button>
+                <button class="btn btn-outline" onclick="closeServiceModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Modal -->
+    <div id="photoModal" class="modal hidden" onclick="if(event.target===this) closePhotoModal()">
+        <div class="modal-photo">
+            <img id="photoModalImg" src="" alt="">
+            <div class="photo-caption" id="photoModalCaption"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
