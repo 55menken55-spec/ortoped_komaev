@@ -84,7 +84,7 @@ function renderGallery(name){
   }
   el.innerHTML = items.map((it, idx)=>`
     <div class="ph" onclick="openPhoto('${name}', ${idx})">
-      <img src="${it.src}" alt="${escapeHtml(it.caption||'')}" loading="lazy">
+      <img src="${it.src}" alt="${escapeHtml(it.caption||'')}" loading="lazy" decoding="async">
       ${it.caption? `<div class="meta"><span>${escapeHtml(it.caption)}</span></div>`:''}
       ${isAdmin? `<button class="del" onclick="event.stopPropagation(); deletePhoto('${name}', ${idx})">✕</button>`:''}
     </div>
@@ -102,6 +102,7 @@ function escapeHtml(str){
 
 /* Admin - Services */
 function openServiceModal(id=null){
+  if(document.getElementById('serviceModal').classList.contains('hidden')) lockScroll();
   document.getElementById('serviceModal').classList.remove('hidden');
   if(id){
     const s = services.find(x=>x.id===id);
@@ -123,7 +124,11 @@ function openServiceModal(id=null){
     document.getElementById('svcOrder').value=services.length+1;
   }
 }
-function closeServiceModal(){ document.getElementById('serviceModal').classList.add('hidden'); }
+function closeServiceModal(){
+  const m = document.getElementById('serviceModal');
+  if(m && !m.classList.contains('hidden')) unlockScroll();
+  m?.classList.add('hidden');
+}
 function editService(id){ openServiceModal(id); }
 function saveService(){
   const id = document.getElementById('svcId').value || 's'+Date.now();
@@ -179,9 +184,14 @@ function openPhoto(galleryName, idx){
   if(!item) return;
   document.getElementById('photoModalImg').src = item.src;
   document.getElementById('photoModalCaption').textContent = item.caption||'';
+  lockScroll();
   document.getElementById('photoModal').classList.remove('hidden');
 }
-function closePhotoModal(){ document.getElementById('photoModal').classList.add('hidden'); }
+function closePhotoModal(){
+  const m = document.getElementById('photoModal');
+  if(m && !m.classList.contains('hidden')) unlockScroll();
+  m?.classList.add('hidden');
+}
 
 /* Admin toggle via console */
 function enableAdmin(){
@@ -231,10 +241,75 @@ function resetData(){
   location.reload();
 }
 
-/* Burger */
-document.getElementById('burger')?.addEventListener('click', ()=>{
-  document.getElementById('mobileMenu').classList.toggle('open');
+/* ---------- Mobile: scroll lock, burger menu, modal handling ---------- */
+let _scrollY = 0;
+let _lockCount = 0;
+
+function lockScroll(){
+  if(_lockCount === 0){
+    _scrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = `-${_scrollY}px`;
+    document.body.classList.add('no-scroll');
+  }
+  _lockCount++;
+}
+function unlockScroll(){
+  _lockCount = Math.max(0, _lockCount - 1);
+  if(_lockCount === 0 && document.body.classList.contains('no-scroll')){
+    document.body.classList.remove('no-scroll');
+    document.body.style.top = '';
+    window.scrollTo(0, _scrollY);
+  }
+}
+
+const burgerBtn = document.getElementById('burger');
+const mobileMenu = document.getElementById('mobileMenu');
+
+function setMenu(open){
+  if(!burgerBtn || !mobileMenu) return;
+  mobileMenu.classList.toggle('open', open);
+  burgerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  burgerBtn.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  mobileMenu.setAttribute('aria-hidden', open ? 'false' : 'true');
+  if(open) lockScroll(); else unlockScroll();
+}
+
+burgerBtn?.addEventListener('click', ()=>{
+  setMenu(!mobileMenu.classList.contains('open'));
 });
+
+/* close the menu after tapping any link inside it */
+mobileMenu?.addEventListener('click', (e)=>{
+  const link = e.target.closest('a');
+  if(link) setMenu(false);
+});
+
+/* close the menu when the screen grows past the mobile breakpoint */
+const mobileQuery = window.matchMedia('(max-width:1000px)');
+(mobileQuery.addEventListener ? mobileQuery.addEventListener('change', onBreakpoint) : mobileQuery.addListener(onBreakpoint));
+function onBreakpoint(e){ if(!e.matches) setMenu(false); }
+
+/* Escape closes menu / modals */
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Escape') return;
+  if(!document.getElementById('photoModal')?.classList.contains('hidden')){ closePhotoModal(); return; }
+  if(!document.getElementById('serviceModal')?.classList.contains('hidden')){ closeServiceModal(); return; }
+  if(mobileMenu?.classList.contains('open')) setMenu(false);
+});
+
+/* Swipe down / tap outside to dismiss the photo viewer */
+(function(){
+  const modal = document.getElementById('photoModal');
+  if(!modal) return;
+  let startY = null;
+  modal.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, {passive:true});
+  modal.addEventListener('touchend', (e)=>{
+    if(startY === null) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    if(dy > 80) closePhotoModal();
+    startY = null;
+  }, {passive:true});
+})();
 
 /* Init */
 loadData();
