@@ -74,15 +74,25 @@
                     <a href="https://vk.com/ortoped_komaev" target="_blank" class="btn btn-outline">Написать в VK</a>
                 </div>
             </div>
-            <div class="hero-gallery" id="heroGallery">
-                <!-- images via JS -->
+            <div class="hero-media">
+                <div class="admin-only" data-gallery="hero">
+                    <label class="btn btn-small btn-red">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'hero')"></label>
+                </div>
+                <div class="hero-gallery" id="heroGallery">
+                    <!-- images via JS -->
+                </div>
             </div>
         </div>
     </section>
 
     <section class="about">
         <div class="container about-inner">
-            <div class="about-photos" id="aboutGallery"></div>
+            <div class="about-media">
+                <div class="admin-only" data-gallery="about">
+                    <label class="btn btn-small btn-red">+ Добавить фото <input type="file" accept="image/*" multiple hidden onchange="handleUpload(event,'about')"></label>
+                </div>
+                <div class="about-photos" id="aboutGallery"></div>
+            </div>
             <div class="about-text">
                 <h2>Приём — это <span class="red">диагностика,</span> а не просто продажа стелек</h2>
                 <ul>
