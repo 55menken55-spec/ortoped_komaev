@@ -17,8 +17,7 @@ const DEFAULT_GALLERIES = {
   priem: [],
   konsult: [],
   stelki: [],
-  dinamika: [],
-  contacts: []
+  dinamika: []
 };
 
 let services = [];
@@ -152,7 +151,6 @@ function saveGalleries() {
 
 function updateSupabaseStatusUI(connected) {
   const badge = document.getElementById('supabaseStatusBadge');
-  const footerStatus = document.getElementById('footerDbStatus');
   const hint = document.getElementById('adminBarHint');
 
   if (badge) {
@@ -165,12 +163,6 @@ function updateSupabaseStatusUI(connected) {
       badge.className = 'badge-status status-local';
       badge.title = 'Фото сохраняются локально в браузере. Нажмите «База данных Supabase» для подключения';
     }
-  }
-
-  if (footerStatus) {
-    footerStatus.textContent = connected
-      ? 'База данных: Supabase Database & Storage (онлайн)'
-      : 'Локальный режим (localStorage браузера). Подключите Supabase в админке.';
   }
 
   if (hint) {
@@ -209,8 +201,7 @@ function renderGallery(name) {
     priem: 'gallery-priem',
     konsult: 'gallery-konsult',
     stelki: 'gallery-stelki',
-    dinamika: 'gallery-dinamika',
-    contacts: 'gallery-contacts'
+    dinamika: 'gallery-dinamika'
   }[name];
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -231,7 +222,7 @@ function renderGallery(name) {
 }
 
 function renderAllGalleries() {
-  ['hero', 'about', 'priem', 'konsult', 'stelki', 'dinamika', 'contacts'].forEach(renderGallery);
+  ['hero', 'about', 'priem', 'konsult', 'stelki', 'dinamika'].forEach(renderGallery);
 }
 
 function escapeHtml(str) {
