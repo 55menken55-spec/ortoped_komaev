@@ -202,6 +202,23 @@ a,button{touch-action:manipulation}
 .contact-card b{font-size:18px;display:block}
 .contact-card span{font-size:13px;color:var(--muted)}
 .contacts-note{font-size:14px;line-height:1.6;background:var(--gray);padding:14px 16px;border-radius:12px}
+.contacts-note a{color:var(--red);font-weight:700;text-decoration:none;border-bottom:1.5px solid currentColor}
+.contacts-note a:hover{color:var(--red-dark)}
+/* online booking — the primary way to book */
+.contact-card.book-online{background:var(--black);color:#fff;border-color:var(--black)}
+.contact-card.book-online .cc-icon{background:var(--red);color:#fff}
+.contact-card.book-online b{color:#fff}
+.contact-card.book-online span{color:#c9c9c9}
+.contact-card.book-online:hover{background:#1a1a1a}
+/* booking CTA under the price list */
+.services-booking{
+  margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:20px 22px;border:1.5px solid var(--black);border-radius:var(--radius);background:var(--gray);
+}
+.services-booking .sb-text{display:flex;flex-direction:column;gap:4px;min-width:220px}
+.services-booking .sb-text b{font-family:Unbounded;font-size:18px}
+.services-booking .sb-text span{font-size:14px;color:var(--muted);max-width:460px}
+.services-booking .sb-actions{display:flex;gap:10px;flex-wrap:wrap}
 .map-placeholder{border:1.5px dashed var(--black);border-radius:var(--radius);padding:18px;min-height:340px;display:flex;flex-direction:column;gap:12px}
 .map-custom img{max-width:100%;border-radius:12px}
 
@@ -341,6 +358,15 @@ a,button{touch-action:manipulation}
   .cc-icon{width:44px;height:44px;flex-shrink:0}
   .map-placeholder{min-height:240px;padding:14px}
   .contacts-note{font-size:13px}
+  .contact-card.book-online{padding:16px 14px}
+
+  /* booking CTA stacks, buttons stay tappable */
+  .services-booking{flex-direction:column;align-items:stretch;gap:14px;padding:16px}
+  .services-booking .sb-text b{font-size:16px}
+  .services-booking .sb-text span{font-size:13px}
+  .services-booking .sb-actions .btn{flex:1 1 100%;min-height:48px}
+  /* two buttons must fit the bottom bar without clipping */
+  .mobile-cta .btn{font-size:14px;padding:12px 8px;letter-spacing:0}
 
   /* footer */
   .footer-inner{flex-direction:column;align-items:flex-start;gap:8px}
@@ -389,6 +415,7 @@ a,button{touch-action:manipulation}
   .hero-stats{margin:10px 0 12px}
   .about{padding:20px 0 28px}
   .services,.gallery-section,.contacts{padding:28px 0}
+  .services-booking{padding:14px 16px;gap:12px}
   .map-placeholder{min-height:200px}
   .mobile-menu{max-height:calc(100vh - var(--header-h))}
 }
