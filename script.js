@@ -152,7 +152,6 @@ function saveGalleries() {
 
 function updateSupabaseStatusUI(connected) {
   const badge = document.getElementById('supabaseStatusBadge');
-  const footerStatus = document.getElementById('footerDbStatus');
   const hint = document.getElementById('adminBarHint');
 
   if (badge) {
@@ -165,12 +164,6 @@ function updateSupabaseStatusUI(connected) {
       badge.className = 'badge-status status-local';
       badge.title = 'Фото сохраняются локально в браузере. Нажмите «База данных Supabase» для подключения';
     }
-  }
-
-  if (footerStatus) {
-    footerStatus.textContent = connected
-      ? 'База данных: Supabase Database & Storage (онлайн)'
-      : 'Локальный режим (localStorage браузера). Подключите Supabase в админке.';
   }
 
   if (hint) {

@@ -201,9 +201,6 @@ a,button{touch-action:manipulation}
 .cc-icon{width:48px;height:48px;background:var(--black);color:#fff;display:grid;place-items:center;border-radius:12px;font-weight:800}
 .contact-card b{font-size:18px;display:block}
 .contact-card span{font-size:13px;color:var(--muted)}
-.contacts-note{font-size:14px;line-height:1.6;background:var(--gray);padding:14px 16px;border-radius:12px}
-.contacts-note a{color:var(--red);font-weight:700;text-decoration:none;border-bottom:1.5px solid currentColor}
-.contacts-note a:hover{color:var(--red-dark)}
 /* online booking — the primary way to book */
 .contact-card.book-online{background:var(--black);color:#fff;border-color:var(--black)}
 .contact-card.book-online .cc-icon{background:var(--red);color:#fff}
@@ -225,7 +222,6 @@ a,button{touch-action:manipulation}
 /* Footer */
 .footer{padding:22px 0;border-top:1px solid var(--gray2);background:var(--gray);font-size:13px;color:var(--muted)}
 .footer-inner{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.footer a{color:var(--black);font-weight:700}
 
 /* Modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;z-index:2000;padding:20px}
@@ -357,7 +353,6 @@ a,button{touch-action:manipulation}
   .contact-card b{font-size:16px;word-break:break-word}
   .cc-icon{width:44px;height:44px;flex-shrink:0}
   .map-placeholder{min-height:240px;padding:14px}
-  .contacts-note{font-size:13px}
   .contact-card.book-online{padding:16px 14px}
 
   /* booking CTA stacks, buttons stay tappable */
