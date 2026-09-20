@@ -307,13 +307,13 @@
             </div>
 
             <div class="form-group">
-                <label>Supabase Anon Key (Public)
+                <label>Supabase Publishable / Anon Key (Public)
                     <div class="input-password-wrapper">
-                        <input type="password" id="sbAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." spellcheck="false" autocomplete="off">
+                        <input type="password" id="sbAnonKey" placeholder="sb_publishable_... или eyJhbGciOiJIUzI1NiIsInR5cCI6..." spellcheck="false" autocomplete="off">
                         <button type="button" class="toggle-pwd" onclick="toggleAnonKeyVisibility()" aria-label="Показать/скрыть ключ">👁️</button>
                     </div>
                 </label>
-                <span class="field-hint">Из панели Supabase: <b>Project Settings → API → anon (public)</b></span>
+                <span class="field-hint">Из панели Supabase: <b>Project Settings → API → Publishable key</b> (начинается с <code>sb_publishable_</code>)</span>
             </div>
 
             <div class="form-group">
@@ -331,6 +331,14 @@
                     <p>Хотите перенести сохранённые в этом браузере фото в Supabase?</p>
                 </div>
                 <button type="button" class="btn btn-small btn-red" onclick="runMigration()">📤 Перенести в Supabase</button>
+            </div>
+
+            <div id="sbServicesBlock" class="migrate-block hidden">
+                <div class="migrate-text">
+                    <b>Услуги на сайте: <span id="localServicesCount">0</span> шт.</b>
+                    <p>Выгрузите текущий прайс в базу данных. Дальше цены будут синхронизироваться на всех устройствах автоматически.</p>
+                </div>
+                <button type="button" class="btn btn-small btn-red" onclick="pushServicesToCloud()">⬆ Выгрузить услуги в Supabase</button>
             </div>
 
             <div class="modal-actions sb-actions-row">
@@ -359,7 +367,7 @@
                                 <li>Нажмите <b>Save bucket</b>.</li>
                             </ul>
                         </li>
-                        <li>Перейдите в <b>Project Settings → API</b>: скопируйте <b>Project URL</b> и <b>anon public</b> ключ, вставьте их в поля выше и нажмите «Сохранить и проверить».</li>
+                        <li>Перейдите в <b>Project Settings → API</b>: скопируйте <b>Project URL</b> и <b>Publishable</b> ключ (начинается с <code>sb_publishable_</code>), вставьте их в поля выше и нажмите «Сохранить и проверить».</li>
                     </ol>
                     <div class="permanent-note">
                         💡 <b>Подсказка:</b> чтобы настройки применялись для всех пользователей сразу из кода без ввода ключей в браузере, вы также можете указать Project URL и Anon Key в файле <code>supabase.js</code>.
