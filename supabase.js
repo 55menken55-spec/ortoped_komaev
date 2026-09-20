@@ -52,7 +52,7 @@ create policy "allow_public_insert_storage" on storage.objects for insert with c
 drop policy if exists "allow_public_delete_storage" on storage.objects;
 create policy "allow_public_delete_storage" on storage.objects for delete using (bucket_id = 'photos');
 
--- 5. (Опционально) Таблица для синхронизации услуг и цен
+-- 5. Таблица для синхронизации услуг и цен (прайс-лист сайта)
 create table if not exists public.services (
     id text primary key,
     title text not null,
@@ -195,33 +195,54 @@ class KomaevSupabaseManager {
       dbDetails = `Ошибка соединения: ${err.message}`;
     }
 
-    let storageOk = false;
-    let storageDetails = '';
+    // Таблица для прайс-листа (синхронизация услуг)
+    let servicesOk = null; // true / false / null (не удалось определить)
     try {
-      const res = await fetch(`${cfg.url}/storage/v1/bucket/${cfg.bucket}`, {
+      const res = await fetch(`${cfg.url}/rest/v1/services?select=id&limit=1`, {
         method: 'GET',
         headers: this._getHeaders(cfg)
       });
       if (res.ok) {
-        storageOk = true;
+        servicesOk = true;
       } else {
         const txt = await res.text();
-        if (res.status === 404 || txt.includes('not found') || txt.includes('The resource was not found')) {
-          storageDetails = `Бакет «${cfg.bucket}» не найден. Создайте его в разделе Storage → New bucket.`;
-        } else {
-          storageDetails = `Ошибка HTTP ${res.status}: ${txt.slice(0, 100)}`;
+        if (res.status === 404 || txt.includes('does not exist')) {
+          servicesOk = false;
         }
       }
     } catch (err) {
-      storageDetails = `Ошибка соединения: ${err.message}`;
+      servicesOk = null;
     }
 
-    if (dbOk && storageOk) {
+    // Бакет Storage
+    let storageOk = false;
+    let storageDetails = '';
+    const bucketState = await this._probeBucketState(cfg);
+    switch (bucketState.state) {
+      case 'ok':
+        storageOk = true;
+        storageDetails = `бакет «${cfg.bucket}» доступен (публичный)`;
+        break;
+      case 'not-found':
+        storageDetails = `Бакет «${cfg.bucket}» не найден. Создайте его: Storage → New bucket, имя «${cfg.bucket}», включите Public bucket, Save bucket.`;
+        break;
+      case 'not-found-or-private':
+        storageDetails = `Бакет «${cfg.bucket}» не найден, либо он не публичный. Создайте его (Storage → New bucket, имя «${cfg.bucket}») и включите Public bucket.`;
+        break;
+      case 'not-public':
+        storageDetails = `Бакет «${cfg.bucket}» существует, но закрыт для публичного доступа. Включите Public bucket (Storage → бакет «${cfg.bucket}» → ⋮ → Make public), иначе фото не будут отображаться на сайте.`;
+        break;
+      default:
+        storageDetails = `Не удалось однозначно проверить бакет «${cfg.bucket}»${bucketState.reason ? ' (' + bucketState.reason + ')' : ''}. Если бакет создан — убедитесь, что включён Public bucket.`;
+    }
+
+    if (dbOk && storageOk && servicesOk !== false) {
       return {
         ok: true,
         dbOk: true,
         storageOk: true,
-        message: '✅ Подключение успешно! База данных (таблица «photos») и хранилище файлов (бакет «' + cfg.bucket + '») полностью готовы к работе.'
+        servicesOk: true,
+        message: '✅ Подключение успешно! База данных (таблицы «photos» и «services») и хранилище файлов (бакет «' + cfg.bucket + '») полностью готовы к работе.'
       };
     }
 
@@ -231,8 +252,15 @@ class KomaevSupabaseManager {
     } else {
       report += `• База данных: ❌ ${dbDetails}\n`;
     }
+    if (servicesOk === true) {
+      report += '• Прайс-лист: ✅ таблица «services» найдена — услуги будут синхронизироваться\n';
+    } else if (servicesOk === false) {
+      report += '• Прайс-лист: ❌ таблица «services» не найдена. Запустите SQL-скрипт из инструкции ниже — иначе сохранённые услуги не попадут в базу\n';
+    } else {
+      report += '• Прайс-лист: ⚠️ не удалось проверить таблицу «services»\n';
+    }
     if (storageOk) {
-      report += `• Хранилище: ✅ бакет «${cfg.bucket}» доступен\n`;
+      report += `• Хранилище: ✅ ${storageDetails}\n`;
     } else {
       report += `• Хранилище: ⚠️ ${storageDetails}\n`;
     }
@@ -242,8 +270,118 @@ class KomaevSupabaseManager {
       ok: false,
       dbOk,
       storageOk,
+      servicesOk,
       message: report
     };
+  }
+
+  /**
+   * Определяет реальное состояние бакета Storage:
+   *   'ok'               — бакет существует и публичный
+   *   'not-public'       — бакет существует, но не публичный
+   *   'not-found'        — бакет не существует
+   *   'not-found-or-private' — различить «не существует» и «не публичный» не удалось
+   *   'unknown'          — ответить однозначно не удалось
+   *
+   * Основной зонд — запрос несуществующего файла ВНУТРИ бакета через PUBLIC-эндпоинт
+   * (авторизация не требуется, работает во всех версиях Storage API). Сервер
+   * возвращает разные ошибки, по которым видно, существует ли бакет:
+   *   NoSuchKey / "Object not found"   → бакет найден и публичный, просто нет файла
+   *   NoSuchBucket / "Bucket not found" → бакет отсутствует или не публичный
+   * (Раньше использовался GET /storage/v1/bucket/{name} — этого маршрута нет в
+   * старых версиях Storage, он отдавал 404 даже при существующем бакете.)
+   */
+  async _probeBucketState(cfg) {
+    const bucket = encodeURIComponent(cfg.bucket);
+    const probePath = '__komaev_check_' + Date.now();
+
+    let stage1 = null;
+    try {
+      const res = await fetch(`${cfg.url}/storage/v1/object/public/${bucket}/${probePath}`, {
+        method: 'GET'
+      });
+      let txt = '';
+      try { txt = await res.text(); } catch (e) { /* ignore */ }
+      let json = null;
+      try { json = JSON.parse(txt); } catch (e) { /* ignore */ }
+      stage1 = {
+        status: res.status,
+        body: (txt || '').toLowerCase(),
+        code: String((json && (json.code || json.error)) || '').toLowerCase()
+      };
+    } catch (err) {
+      return { state: 'unknown', reason: `ошибка соединения: ${err.message}` };
+    }
+
+    if (stage1.status === 200) {
+      return { state: 'ok' };
+    }
+
+    const looksLikeMissingObject =
+      stage1.code === 'nossuchkey' ||
+      stage1.code === 'objectnotfound' ||
+      stage1.body.includes('object not found') ||
+      stage1.body.includes('could not find the object') ||
+      stage1.body.includes('the specified object does not exist') ||
+      (stage1.status === 404 && !stage1.body.includes('bucket') &&
+        (stage1.body.includes('not found') || stage1.body.includes('does not exist')));
+
+    if (looksLikeMissingObject) {
+      // Сервер нашёл бакет (и он публичный), просто такого файла в нём нет
+      return { state: 'ok' };
+    }
+
+    const looksLikeMissingBucket =
+      stage1.code === 'nossuchbucket' ||
+      stage1.body.includes('bucket not found') ||
+      stage1.body.includes('could not find bucket') ||
+      (stage1.body.includes('bucket') && stage1.body.includes('not found'));
+
+    if (looksLikeMissingBucket) {
+      const disamb = await this._disambiguateBucket(cfg);
+      if (disamb === 'exists') return { state: 'not-public' };
+      if (disamb === 'missing') return { state: 'not-found' };
+      return { state: 'not-found-or-private' };
+    }
+
+    if (stage1.status === 401 || stage1.status === 403) {
+      // Сервер нашёл бакет, но публичный доступ к нему отказал
+      return { state: 'not-public' };
+    }
+
+    return { state: 'unknown', reason: `HTTP ${stage1.status} ${stage1.body.slice(0, 120)}`.trim() };
+  }
+
+  /**
+   * Дополнительные зонды, чтобы различить «бакета нет» и «бакет приватный»:
+   *   1) GET /storage/v1/bucket/{name} — детали бакета (доступен в новых версиях Storage);
+   *   2) GET /storage/v1/bucket — список бакетов (работает во всех версиях,
+   *      хотя для анонимного ключа доступ к нему может быть ограничен).
+   */
+  async _disambiguateBucket(cfg) {
+    try {
+      const res = await fetch(`${cfg.url}/storage/v1/bucket/${encodeURIComponent(cfg.bucket)}`, {
+        method: 'GET',
+        headers: this._getHeaders(cfg)
+      });
+      if (res.ok) return 'exists';
+    } catch (e) { /* ignore */ }
+
+    try {
+      const res = await fetch(`${cfg.url}/storage/v1/bucket`, {
+        method: 'GET',
+        headers: this._getHeaders(cfg)
+      });
+      if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list)) {
+          if (list.some(b => b && (b.id === cfg.bucket || b.name === cfg.bucket))) return 'exists';
+          if (list.length > 0) return 'missing';
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    return 'unknown';
   }
 
   /**
@@ -441,10 +579,10 @@ class KomaevSupabaseManager {
   }
 
   /**
-   * Upsert a service in Supabase
+   * Upsert a service in Supabase. Throws on failure so the UI can report it honestly.
    */
   async saveService(service) {
-    if (!this.isConfigured()) return;
+    if (!this.isConfigured()) throw new Error('Supabase не настроен');
     const cfg = this.getConfig();
     const client = this.getClient();
     const payload = {
@@ -456,43 +594,60 @@ class KomaevSupabaseManager {
       display_order: service.order || 1
     };
 
-    try {
-      if (client) {
-        await client.from('services').upsert(payload, { onConflict: 'id' });
-      } else {
-        await fetch(`${cfg.url}/rest/v1/services`, {
-          method: 'POST',
-          headers: this._getHeaders(cfg, {
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          }),
-          body: JSON.stringify(payload)
-        });
+    if (client) {
+      const { error } = await client.from('services').upsert(payload, { onConflict: 'id' });
+      if (error) {
+        console.warn('Could not save service to Supabase:', error);
+        throw new Error('Не удалось сохранить услугу в Supabase: ' + (error.message || 'ошибка'));
       }
-    } catch (e) {
-      console.warn('Could not save service to Supabase:', e);
+      return true;
     }
+
+    const res = await fetch(`${cfg.url}/rest/v1/services`, {
+      method: 'POST',
+      headers: this._getHeaders(cfg, {
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+        'On-Conflict': 'id'
+      }),
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.warn('Could not save service to Supabase:', res.status, txt);
+      throw new Error(`Ошибка сохранения услуги в Supabase (HTTP ${res.status})`);
+    }
+    return true;
   }
 
   /**
-   * Delete a service from Supabase
+   * Delete a service from Supabase. Throws on failure so the UI can report it honestly.
    */
   async deleteService(serviceId) {
-    if (!this.isConfigured() || !serviceId) return;
+    if (!this.isConfigured()) throw new Error('Supabase не настроен');
+    if (!serviceId) throw new Error('Не указан id услуги');
     const cfg = this.getConfig();
     const client = this.getClient();
-    try {
-      if (client) {
-        await client.from('services').delete().eq('id', serviceId);
-      } else {
-        await fetch(`${cfg.url}/rest/v1/services?id=eq.${serviceId}`, {
-          method: 'DELETE',
-          headers: this._getHeaders(cfg)
-        });
+
+    if (client) {
+      const { error } = await client.from('services').delete().eq('id', serviceId);
+      if (error) {
+        console.warn('Could not delete service from Supabase:', error);
+        throw new Error('Не удалось удалить услугу из Supabase: ' + (error.message || 'ошибка'));
       }
-    } catch (e) {
-      console.warn('Could not delete service from Supabase:', e);
+      return true;
     }
+
+    const res = await fetch(`${cfg.url}/rest/v1/services?id=eq.${encodeURIComponent(serviceId)}`, {
+      method: 'DELETE',
+      headers: this._getHeaders(cfg)
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.warn('Could not delete service from Supabase:', res.status, txt);
+      throw new Error(`Ошибка удаления услуги из Supabase (HTTP ${res.status})`);
+    }
+    return true;
   }
 }
 

@@ -298,6 +298,7 @@ async function saveService() {
       showToast('Услуга сохранена в базе данных', 'success');
     } catch (e) {
       console.warn('Could not sync service to Supabase:', e);
+      showToast('Услуга сохранена локально, но НЕ синхронизирована в Supabase. Откройте «⚡ База данных Supabase» и нажмите «Сохранить и проверить».', 'error', 8000);
     }
   } else {
     showToast('Услуга сохранена локально', 'info');
@@ -316,6 +317,7 @@ async function deleteService(id) {
       showToast('Услуга удалена из базы данных', 'success');
     } catch (e) {
       console.warn('Could not delete service from Supabase:', e);
+      showToast('Услуга удалена локально, но НЕ в Supabase. Проверьте подключение в «⚡ База данных Supabase».', 'error', 7000);
     }
   }
 }
