@@ -460,6 +460,9 @@ function openSupabaseModal() {
     }
   }
 
+  // Services sync block: show whenever Supabase is active
+  updateServicesSyncBlock();
+
   // Clear status box
   const statusBox = document.getElementById('sbStatusBox');
   if (statusBox) statusBox.classList.add('hidden');
@@ -517,6 +520,9 @@ async function saveAndTestSupabase() {
         countSpan.textContent = localCount;
         migrateBlock.classList.remove('hidden');
       }
+
+      // Show services sync block
+      updateServicesSyncBlock();
     } else {
       showSbStatus(testResult.message, false);
     }
@@ -550,6 +556,7 @@ function disconnectSupabase() {
   showToast('Supabase отключен, включен локальный режим', 'info');
   document.getElementById('sbStatusBox')?.classList.add('hidden');
   document.getElementById('sbMigrateBlock')?.classList.add('hidden');
+  document.getElementById('sbServicesBlock')?.classList.add('hidden');
   loadData();
 }
 
@@ -623,6 +630,61 @@ async function runMigration() {
 
   document.getElementById('sbMigrateBlock')?.classList.add('hidden');
   showToast(`✅ Миграция завершена! Перенесено ${successCount} фото в Supabase.`, 'success', 4500);
+}
+
+/* ---------- Services sync with Supabase ---------- */
+function updateServicesSyncBlock() {
+  const block = document.getElementById('sbServicesBlock');
+  const countSpan = document.getElementById('localServicesCount');
+  if (!block || !countSpan) return;
+  if (isSupabaseActive && Array.isArray(services) && services.length > 0) {
+    countSpan.textContent = services.length;
+    block.classList.remove('hidden');
+  } else {
+    block.classList.add('hidden');
+  }
+}
+
+async function pushServicesToCloud() {
+  if (!isSupabaseActive || !window.komaevSupabase) {
+    alert('Сначала подключите Supabase');
+    return;
+  }
+  if (!Array.isArray(services) || services.length === 0) {
+    alert('Нет услуг для выгрузки');
+    return;
+  }
+  if (!confirm(`Выгрузить ${services.length} услуг в базу данных Supabase? Текущий прайс станет общим для всех устройств.`)) return;
+
+  showToast('Выгрузка услуг в Supabase...', 'loading', 0);
+  let okCount = 0;
+  let failCount = 0;
+  for (const s of services) {
+    try {
+      await window.komaevSupabase.saveService(s);
+      okCount++;
+    } catch (err) {
+      console.warn('Failed to push service to Supabase:', s, err);
+      failCount++;
+    }
+  }
+
+  if (failCount === 0) {
+    // Re-read from cloud to confirm sync
+    try {
+      const remote = await window.komaevSupabase.fetchServices();
+      if (Array.isArray(remote) && remote.length > 0) {
+        services = remote;
+        saveServices();
+        renderServices();
+      }
+    } catch (e) {
+      console.warn('Could not re-read services from Supabase:', e);
+    }
+    showToast(`✅ ${okCount} услуг выгружено в Supabase! Цены теперь общие для всех устройств.`, 'success', 4500);
+  } else {
+    showToast(`Выгружено: ${okCount}, ошибок: ${failCount}. Проверьте, что таблица «services» создана — запустите SQL-скрипт из инструкции ниже.`, 'error', 7000);
+  }
 }
 
 /* ---------- Photo Modal Viewer ---------- */
@@ -781,6 +843,7 @@ window.disconnectSupabase = disconnectSupabase;
 window.toggleAnonKeyVisibility = toggleAnonKeyVisibility;
 window.copySqlScript = copySqlScript;
 window.runMigration = runMigration;
+window.pushServicesToCloud = pushServicesToCloud;
 window.editService = editService;
 window.saveService = saveService;
 window.deleteService = deleteService;

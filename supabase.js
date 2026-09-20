@@ -8,8 +8,8 @@
  * or configure them dynamically through the Admin panel on the site.
  */
 window.SUPABASE_CONFIG = {
-  url: '',       // e.g. 'https://xyzcompany.supabase.co'
-  anonKey: '',   // Public Anon Key (starts with eyJ...)
+  url: 'https://cvkxgqtqpfjmqzqqlpvd.supabase.co', // Supabase Project URL
+  anonKey: 'sb_publishable_0GBvql4pjskdRs5miRWgxw_bge7K3lU', // Publishable (anon public) key
   bucket: 'photos' // Storage bucket name (default: photos)
 };
 
