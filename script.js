@@ -17,8 +17,7 @@ const DEFAULT_GALLERIES = {
   priem: [],
   konsult: [],
   stelki: [],
-  dinamika: [],
-  contacts: []
+  dinamika: []
 };
 
 let services = [];
@@ -202,8 +201,7 @@ function renderGallery(name) {
     priem: 'gallery-priem',
     konsult: 'gallery-konsult',
     stelki: 'gallery-stelki',
-    dinamika: 'gallery-dinamika',
-    contacts: 'gallery-contacts'
+    dinamika: 'gallery-dinamika'
   }[name];
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -224,7 +222,7 @@ function renderGallery(name) {
 }
 
 function renderAllGalleries() {
-  ['hero', 'about', 'priem', 'konsult', 'stelki', 'dinamika', 'contacts'].forEach(renderGallery);
+  ['hero', 'about', 'priem', 'konsult', 'stelki', 'dinamika'].forEach(renderGallery);
 }
 
 function escapeHtml(str) {
