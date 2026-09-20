@@ -18,14 +18,18 @@
     <!-- Admin Bar (hidden by default) -->
     <div id="adminBar" class="admin-bar hidden">
         <div class="admin-bar-inner">
-            <span>🔓 РЕЖИМ АДМИНИСТРАТОРА</span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span>🔓 РЕЖИМ АДМИНИСТРАТОРА</span>
+                <span id="supabaseStatusBadge" class="badge-status status-local" title="Статус базы данных">⚪ Supabase: не подключен</span>
+            </div>
             <div class="admin-actions">
                 <button onclick="openServiceModal()">+ Услуга</button>
+                <button onclick="openSupabaseModal()" class="btn-supabase">⚡ База данных Supabase</button>
                 <button onclick="resetData()" class="secondary">Сбросить</button>
                 <button onclick="disableAdmin()" class="danger">Выйти из админки</button>
             </div>
         </div>
-        <div class="admin-hint">Фото добавляются кнопками в каждом разделе. Услуги — редактируются на карточках. Данные хранятся в браузере (localStorage).</div>
+        <div class="admin-hint" id="adminBarHint">Фото загружаются в облачную базу данных Supabase и хранятся на сервере. Если база не подключена, данные сохраняются локально.</div>
     </div>
 
     <header class="header">
@@ -253,7 +257,7 @@
         <div class="container footer-inner">
             <div>© 2026 Вадим Комаев — ортопед-реабилитолог</div>
             <div class="footer-links">
-                <span>Сайт работает без базы данных. Фото и цены хранятся в браузере.</span>
+                <span id="footerDbStatus">База данных: Supabase Database &amp; Storage</span>
                 <a href="#" onclick="showAdminHelp(); return false;">Как войти в админку?</a>
             </div>
         </div>
@@ -288,12 +292,97 @@
         </div>
     </div>
 
+    <!-- Supabase Configuration Modal -->
+    <div id="supabaseModal" class="modal hidden" onclick="if(event.target===this) closeSupabaseModal()">
+        <div class="modal-content modal-supabase" role="dialog" aria-modal="true" aria-labelledby="supabaseModalTitle">
+            <button type="button" class="modal-close" onclick="closeSupabaseModal()" aria-label="Закрыть">✕</button>
+            <h3 id="supabaseModalTitle">⚡ База данных &amp; Хранилище Supabase</h3>
+            <p class="modal-intro">Подключите проект Supabase для онлайн-загрузки и сохранения фотографий на сайте.</p>
+
+            <div class="form-group">
+                <label>Supabase Project URL
+                    <input type="url" id="sbUrl" placeholder="https://xxxxxxxxxxxx.supabase.co" spellcheck="false" autocomplete="off">
+                </label>
+                <span class="field-hint">Из панели Supabase: <b>Project Settings → API → Project URL</b></span>
+            </div>
+
+            <div class="form-group">
+                <label>Supabase Anon Key (Public)
+                    <div class="input-password-wrapper">
+                        <input type="password" id="sbAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." spellcheck="false" autocomplete="off">
+                        <button type="button" class="toggle-pwd" onclick="toggleAnonKeyVisibility()" aria-label="Показать/скрыть ключ">👁️</button>
+                    </div>
+                </label>
+                <span class="field-hint">Из панели Supabase: <b>Project Settings → API → anon (public)</b></span>
+            </div>
+
+            <div class="form-group">
+                <label>Имя бакета Storage
+                    <input type="text" id="sbBucket" placeholder="photos" value="photos" spellcheck="false">
+                </label>
+                <span class="field-hint">Бакет в разделе <b>Storage</b> (по умолчанию <code>photos</code>, обязательно с включенным <b>Public bucket</b>)</span>
+            </div>
+
+            <div id="sbStatusBox" class="status-box hidden"></div>
+
+            <div id="sbMigrateBlock" class="migrate-block hidden">
+                <div class="migrate-text">
+                    <b>Локальные фото в браузере: <span id="localPhotoCount">0</span> шт.</b>
+                    <p>Хотите перенести сохранённые в этом браузере фото в Supabase?</p>
+                </div>
+                <button type="button" class="btn btn-small btn-red" onclick="runMigration()">📤 Перенести в Supabase</button>
+            </div>
+
+            <div class="modal-actions sb-actions-row">
+                <button type="button" class="btn btn-black" id="sbSaveBtn" onclick="saveAndTestSupabase()">Сохранить и проверить</button>
+                <button type="button" class="btn btn-outline" onclick="disconnectSupabase()">Отключить</button>
+                <button type="button" class="btn btn-outline" onclick="closeSupabaseModal()">Закрыть</button>
+            </div>
+
+            <details class="instructions-accordion">
+                <summary><b>📖 Пошаговая инструкция по настройке Supabase (2 минуты)</b></summary>
+                <div class="instructions-body">
+                    <ol>
+                        <li>Создайте проект на <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a> (бесплатный тариф).</li>
+                        <li>Перейдите во вкладку <b>SQL Editor</b> слева, нажмите <b>New query</b>, вставьте SQL-скрипт ниже и нажмите <b>Run</b>:
+                            <div class="code-header">
+                                <span>SQL-скрипт создания таблицы photos и правил доступа</span>
+                                <button type="button" class="btn-copy" onclick="copySqlScript(this)">Скопировать SQL</button>
+                            </div>
+                            <pre class="code-box"><code id="sqlScriptBlock"></code></pre>
+                        </li>
+                        <li>Перейдите в раздел <b>Storage</b> слева:
+                            <ul>
+                                <li>Нажмите <b>New bucket</b>.</li>
+                                <li>Введите имя <code>photos</code>.</li>
+                                <li>Включите переключатель <b>Public bucket</b> (обязательно, чтобы фото отображались на сайте).</li>
+                                <li>Нажмите <b>Save bucket</b>.</li>
+                            </ul>
+                        </li>
+                        <li>Перейдите в <b>Project Settings → API</b>: скопируйте <b>Project URL</b> и <b>anon public</b> ключ, вставьте их в поля выше и нажмите «Сохранить и проверить».</li>
+                    </ol>
+                    <div class="permanent-note">
+                        💡 <b>Подсказка:</b> чтобы настройки применялись для всех пользователей сразу из кода без ввода ключей в браузере, вы также можете указать Project URL и Anon Key в файле <code>supabase.js</code>.
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toastNotification" class="toast-notification hidden" role="status" aria-live="polite">
+        <span class="toast-icon" id="toastIcon">ℹ️</span>
+        <span class="toast-message" id="toastMessage">Сообщение</span>
+    </div>
+
     <!-- Sticky action bar (phones & tablets) -->
     <div class="mobile-cta" id="mobileCta">
         <a href="https://bumpix.net/428439" target="_blank" rel="noopener noreferrer" class="btn btn-red">Записаться</a>
         <a href="tel:+79289347101" class="btn btn-black">Позвонить</a>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
