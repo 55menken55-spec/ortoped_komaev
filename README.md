@@ -39,24 +39,93 @@
 - Динамика До/После
 - Контакты
 
+## База данных & Хранилище Supabase
+
+На сайте реализована полная интеграция с **Supabase** (PostgreSQL база данных + Storage для фото):
+- Загрузка фотографий сразу отправляет файлы в защищённый бакет Supabase Storage (`photos`).
+- Метаданные (ссылка на фото, название, раздел, дата, порядок) сохраняются в таблице `photos` в базе данных Supabase.
+- Все посетители сайта на любых устройствах сразу видят добавленные фотографии онлайн.
+- Если база данных не настроена, сайт автоматически работает в безопасном локальном режиме (с сохранением в `localStorage`).
+- Предусмотрена кнопка миграции фото: если ранее фото добавлялись локально, их можно в 1 клик перенести в облачную базу данных Supabase.
+
+### Быстрая настройка за 2 минуты:
+
+1. **Создайте проект:**
+   Зарегистрируйтесь на [supabase.com](https://supabase.com) и создайте новый бесплатный проект (например, `ortoped-komaev`).
+
+2. **Запустите SQL-скрипт:**
+   В левом меню Supabase перейдите в **SQL Editor** -> **New query**, вставьте скрипт и нажмите **Run**:
+   ```sql
+   -- Таблица для фотографий
+   create table if not exists public.photos (
+       id uuid default gen_random_uuid() primary key,
+       gallery text not null,
+       url text not null,
+       storage_path text default '',
+       caption text default '',
+       display_order integer default 0,
+       created_at timestamp with time zone default timezone('utc'::text, now()) not null
+   );
+
+   -- Включаем RLS
+   alter table public.photos enable row level security;
+
+   -- Политики для photos: публичный просмотр и загрузка
+   create policy "allow_public_select_photos" on public.photos for select using (true);
+   create policy "allow_public_insert_photos" on public.photos for insert with check (true);
+   create policy "allow_public_delete_photos" on public.photos for delete using (true);
+   create policy "allow_public_update_photos" on public.photos for update using (true);
+
+   -- Политики для Storage (бакет photos)
+   create policy "allow_public_read_storage" on storage.objects for select using (bucket_id = 'photos');
+   create policy "allow_public_insert_storage" on storage.objects for insert with check (bucket_id = 'photos');
+   create policy "allow_public_delete_storage" on storage.objects for delete using (bucket_id = 'photos');
+   ```
+
+3. **Создайте бакет для файлов:**
+   В левом меню перейдите в **Storage** -> нажмите **New bucket**:
+   - Name: `photos`
+   - Переключатель **Public bucket**: **ВКЛЮЧИТЬ** (зеленый)
+   - Нажмите **Save bucket**.
+
+4. **Подключите к сайту:**
+   Перейдите в **Project Settings → API**:
+   - Скопируйте **Project URL** (например, `https://abcdefghijkl.supabase.co`)
+   - Скопируйте **anon (public)** ключ (начинается на `eyJ...`)
+
+   **Вариант А (через админку сайта):**
+   Откройте сайт -> войдите в админку (`admin()`) -> нажмите кнопку **«⚡ База данных Supabase»** -> вставьте URL и ключ -> нажмите «Сохранить и проверить».
+
+   **Вариант Б (в коде навсегда):**
+   В файле `supabase.js` укажите:
+   ```javascript
+   window.SUPABASE_CONFIG = {
+     url: 'https://ВАШ_ПРОЕКТ.supabase.co',
+     anonKey: 'ВАШ_ANON_КЛЮЧ',
+     bucket: 'photos'
+   };
+   ```
+
+---
+
 ## Админка (через консоль)
 
 Как войти:
 1. Открыть сайт, нажать F12 → вкладка Console
 2. Ввести `admin()` и Enter
-3. Появится чёрная панель сверху
+3. Появится чёрная панель сверху с кнопками управления и индикатором статуса Supabase
 
 Функции в админке:
-- Добавлять/редактировать/удалять услуги и цены
-- Загружать фото в любой раздел (кнопка "+ Добавить фото")
-- Удалять фото (крестик на фото в админ-режиме)
-- Сбросить данные к дефолту
+- **⚡ База данных Supabase** — окно настройки URL, ключа Anon и проверка подключения с автотестом
+- **📤 Перенести в Supabase** — миграция локальных фото в облачное хранилище
+- **+ Добавить фото** — моментальная загрузка фото в Supabase Storage и базу данных
+- **✕ на фото** — удаление фото из базы данных и хранилища
+- **+ Услуга / Редактировать** — управление прайс-листом и услугами
+- **Сбросить** — возврат к изначальным данным
 
 Выйти: кнопка "Выйти из админки" или в консоли `disableAdmin()`
 
 Пароль по умолчанию (если решите включить проверку в script.js): `komaev2024`
-
-Данные хранятся в localStorage браузера (komaev_services, komaev_galleries, komaev_admin). Для продакшена можно подключить бэкенд.
 
 ## Мобильная версия
 

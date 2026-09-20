@@ -428,3 +428,112 @@ a,button{touch-action:manipulation}
 
 .admin-only{display:none}
 .admin-mode .admin-only{display:block}
+
+/* ==========================================================================
+   Supabase Database & Storage UI Styles
+   ========================================================================== */
+.admin-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.badge-status{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:999px;
+  font-size:11px;font-weight:800;letter-spacing:.02em;
+}
+.status-connected{background:#064e3b;color:#34d399;border:1px solid #059669}
+.status-local{background:#27272a;color:#d4d4d8;border:1px solid #3f3f46}
+
+.btn-supabase{
+  background:#10b981 !important;
+  color:#064e3b !important;
+  font-weight:800 !important;
+  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:0 0 12px rgba(16,185,129,0.35);
+  transition:transform .15s ease, background .15s ease;
+}
+.btn-supabase:hover{background:#34d399 !important;transform:translateY(-1px)}
+
+.modal-supabase{max-width:680px;width:100%}
+.modal-intro{font-size:14px;color:var(--muted);margin-top:-4px;margin-bottom:6px;line-height:1.5}
+
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.field-hint{font-size:12px;color:#666;margin-top:2px}
+.field-hint b, .field-hint code{color:var(--black)}
+
+.input-password-wrapper{position:relative;display:flex;align-items:center;width:100%}
+.input-password-wrapper input{width:100%;padding-right:44px}
+.toggle-pwd{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  background:transparent;border:0;cursor:pointer;font-size:18px;padding:6px;opacity:.7;
+}
+.toggle-pwd:hover{opacity:1}
+
+.sb-actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
+.status-box{
+  padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.5;
+  white-space:pre-line;margin-top:6px;
+}
+.status-box.status-success{background:#ecfdf5;border:1.5px solid #10b981;color:#065f46}
+.status-box.status-error{background:#fef2f2;border:1.5px solid #ef4444;color:#991b1b}
+
+.migrate-block{
+  margin-top:12px;padding:12px 16px;
+  background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.migrate-text b{font-size:14px;color:#92400e}
+.migrate-text p{font-size:12px;color:#b45309;margin:2px 0 0}
+
+.instructions-accordion{
+  margin-top:14px;border:1.5px solid var(--gray2);border-radius:14px;
+  padding:12px 16px;background:#fafafa;
+}
+.instructions-accordion summary{cursor:pointer;font-size:14px;user-select:none;padding:4px 0}
+.instructions-body{margin-top:12px;font-size:13px;line-height:1.6}
+.instructions-body ol, .instructions-body ul{padding-left:20px;margin:6px 0}
+.instructions-body li{margin-bottom:8px}
+.code-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:10px;margin-bottom:6px;font-size:12px;font-weight:700;color:#444;
+}
+.code-box{
+  background:#18181b;color:#e4e4e7;padding:12px;border-radius:10px;
+  overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:11px;line-height:1.45;max-height:220px;margin:0;
+}
+.btn-copy{padding:5px 12px;font-size:12px;border-radius:6px;background:var(--black);color:#fff;border:0;cursor:pointer}
+.btn-copy:hover{background:#333}
+.permanent-note{
+  margin-top:12px;padding:10px 14px;background:#eef2ff;border:1px solid #c7d2fe;
+  border-radius:10px;font-size:12px;color:#3730a3;line-height:1.5;
+}
+
+/* Floating Toast Notification */
+.toast-notification{
+  position:fixed;bottom:24px;right:24px;z-index:3000;
+  background:var(--black);color:#fff;padding:14px 18px;border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  display:flex;align-items:center;gap:12px;
+  border-left:4px solid var(--red);
+  max-width:440px;width:auto;font-size:13px;line-height:1.4;
+  animation:toastSlideUp .3s cubic-bezier(0.16,1,0.3,1);
+}
+.toast-notification.success{border-left-color:#10b981}
+.toast-notification.error{border-left-color:#ef4444}
+.toast-notification.hidden{display:none !important}
+.toast-icon{font-size:18px;flex-shrink:0}
+.toast-message{font-weight:600}
+
+@keyframes toastSlideUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media (max-width:760px){
+  .toast-notification{
+    left:14px;right:14px;
+    bottom:calc(84px + env(safe-area-inset-bottom));
+    max-width:none;
+  }
+}
+
